@@ -5,12 +5,13 @@ import type { Quiz, QuizQuestion, MbtiScores, MbtiDichotomy } from "@/lib/types"
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { calculateMbtiType, getDefaultScores } from "@/lib/mbtiCalculator";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, User } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface QuizClientProps {
@@ -19,10 +20,13 @@ interface QuizClientProps {
 
 export default function QuizClient({ quiz }: QuizClientProps) {
   const router = useRouter();
+  const [userName, setUserName] = useState("");
+  const [quizStarted, setQuizStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, MbtiDichotomy | undefined>>({});
   const [scores, setScores] = useState<MbtiScores>(getDefaultScores());
   const [error, setError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const totalQuestions = quiz.questions.length;
   const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -32,7 +36,19 @@ export default function QuizClient({ quiz }: QuizClientProps) {
     setScores(getDefaultScores());
     setAnswers({});
     setCurrentQuestionIndex(0);
+    setQuizStarted(false);
+    setUserName("");
   }, [quiz]);
+
+  const handleNameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userName.trim()) {
+      setNameError("Please enter your name to start the quiz.");
+      return;
+    }
+    setNameError(null);
+    setQuizStarted(true);
+  };
 
   const handleAnswer = (questionId: number, value: MbtiDichotomy) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -65,16 +81,55 @@ export default function QuizClient({ quiz }: QuizClientProps) {
     
     const mbtiType = calculateMbtiType(finalScores);
     localStorage.setItem('quizScores', JSON.stringify(finalScores)); // Store scores for results page
+    localStorage.setItem('userName', userName); // Store user name
     router.push(`/quiz/results/${mbtiType}`);
   };
 
-  const progressPercentage = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const progressPercentage = quizStarted ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0;
+
+  if (!quizStarted) {
+    return (
+      <Card className="w-full max-w-lg mx-auto shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center text-primary">{quiz.title}</CardTitle>
+          <CardDescription className="text-center text-muted-foreground">{quiz.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleNameSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="userName" className="text-lg font-semibold">What's your name?</Label>
+              <Input
+                id="userName"
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter your name or a nickname"
+                className="text-base"
+                aria-describedby="nameError"
+              />
+              {nameError && (
+                <p id="nameError" className="text-sm text-destructive flex items-center mt-1">
+                  <AlertCircle className="h-4 w-4 mr-1" /> {nameError}
+                </p>
+              )}
+            </div>
+            <Button type="submit" size="lg" className="w-full">
+              Start Quiz
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="text-sm text-muted-foreground justify-center">
+          <p>Let's get to know your personality!</p>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-center text-primary">{quiz.title}</CardTitle>
-        <CardDescription className="text-center text-muted-foreground">{quiz.description}</CardDescription>
+        <CardDescription className="text-center text-muted-foreground">Hello, {userName}! {quiz.description}</CardDescription>
         <Progress value={progressPercentage} className="mt-4" />
         <p className="text-sm text-muted-foreground text-center mt-2">Question {currentQuestionIndex + 1} of {totalQuestions}</p>
       </CardHeader>

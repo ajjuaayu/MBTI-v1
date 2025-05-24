@@ -12,13 +12,15 @@ import html2canvas from 'html2canvas'; // Ensure this is installed: npm install 
 
 interface ShareCardProps {
   mbtiType: MBTIType;
+  userName?: string;
   personaDescription?: string; // Optional: AI generated persona
 }
 
 // eslint-disable-next-line react/display-name
-const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, personaDescription }, ref) => {
+const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userName, personaDescription }, ref) => {
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { title: "Personality Type", description: "Unique and special.", iconHint: "star sparkle" };
   const displayTitle = personaDescription ? personaDescription.split(/[,.]/)[0] : typeInfo.title; // Use first part of AI persona as title if available
+  const cardName = userName || "You";
 
   return (
     <div ref={ref} className="bg-gradient-to-br from-primary via-accent to-secondary p-1 rounded-xl shadow-2xl">
@@ -33,7 +35,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, person
               data-ai-hint={typeInfo.iconHint}
             />
           </div>
-          <p className="text-sm font-medium text-primary tracking-wider uppercase">{APP_NAME} Result</p>
+          <p className="text-sm font-medium text-primary tracking-wider uppercase">{cardName}'s {APP_NAME} Result</p>
           <CardTitle className="text-4xl font-bold text-foreground mt-1">{mbtiType}</CardTitle>
           <p className="text-xl text-muted-foreground">{displayTitle}</p>
         </CardHeader>
@@ -70,8 +72,8 @@ export const ShareCardActions = ({ cardRef }: { cardRef: React.RefObject<HTMLDiv
             const file = new File([blob], "typecast_result.png", { type: "image/png" });
             try {
               await navigator.share({
-                title: "My TypeCast Result!",
-                text: `I got ${cardRef.current?.querySelector('h2')?.textContent || 'my personality type'} on TypeCast! Check it out.`,
+                title: `My ${APP_NAME} Result!`,
+                text: `I got ${cardRef.current?.querySelector('h2[class*="text-4xl"]')?.textContent || 'my personality type'} on ${APP_NAME}! Check it out.`, // More specific selector for MBTI type
                 files: [file],
               });
             } catch (error) {

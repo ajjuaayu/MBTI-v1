@@ -12,7 +12,7 @@ import ShareCard, { ShareCardActions } from "@/components/results/ShareCard";
 import MBTIBarChart from "@/components/results/MBTIBarChart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquareHeart, Share, Home, Repeat } from "lucide-react";
+import { MessageSquareHeart, Share, Home, Repeat, User } from "lucide-react";
 import type { MbtiScores } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
@@ -25,6 +25,7 @@ export default function ResultsPage() {
   const [isValidType, setIsValidType] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [scores, setScores] = useState<MbtiScores | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [personaForShareCard, setPersonaForShareCard] = useState<string | undefined>(undefined);
 
   const shareCardRef = useRef<HTMLDivElement>(null);
@@ -38,24 +39,20 @@ export default function ResultsPage() {
           setScores(JSON.parse(storedScores));
         } catch (e) {
           console.error("Failed to parse scores from localStorage", e);
-          // Potentially redirect or show error if scores are crucial and missing/corrupt
         }
       }
-    } else if (mbtiType) { // mbtiType exists but is not valid
-      router.replace("/404"); // Or a more specific error page
+      const storedName = localStorage.getItem('userName');
+      if (storedName) {
+        setUserName(storedName);
+      }
+    } else if (mbtiType) { 
+      router.replace("/404"); 
     }
     setIsLoading(false);
   }, [mbtiType, router]);
 
-  // This effect is to get the persona description for the ShareCard
-  // It's a bit of a workaround as ShareCard is not directly fetching.
-  // A better approach might involve a context or prop drilling from a parent that fetches persona.
   useEffect(() => {
     if (isValidType && typeof personaForShareCard === 'undefined') {
-      // Fetch persona description to pass to ShareCard (simplified)
-      // In a real app, this might be coordinated with PersonaDisplay or use a state management solution.
-      // For now, we simulate getting the first sentence of the standard description for the share card,
-      // assuming AI persona might not be ready or could be too long.
       setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description.split('.')[0] + '.');
     }
   }, [isValidType, mbtiType, personaForShareCard]);
@@ -72,7 +69,6 @@ export default function ResultsPage() {
   }
 
   if (!isValidType) {
-    // This case should be handled by redirection, but as a fallback:
     return (
       <Card className="max-w-lg mx-auto my-10 text-center">
         <CardHeader>
@@ -89,6 +85,7 @@ export default function ResultsPage() {
   }
 
   const typeDetails = MBTI_DESCRIPTIONS[mbtiType];
+  const greetingName = userName ? `${userName}, ` : "";
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-10">
@@ -104,7 +101,7 @@ export default function ResultsPage() {
           />
         </div>
         <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-transparent bg-clip-text">
-          You are {mbtiType}!
+          {greetingName}You are {mbtiType}!
         </h1>
         <p className="text-2xl text-muted-foreground mt-2">{typeDetails.title}</p>
         <p className="text-lg text-foreground mt-4 max-w-2xl mx-auto">{typeDetails.description}</p>
@@ -112,7 +109,7 @@ export default function ResultsPage() {
 
       <section id="share-section" className="max-w-md mx-auto">
         <h2 className="text-2xl font-semibold text-center mb-4">Your Shareable Card</h2>
-        <ShareCard mbtiType={mbtiType} personaDescription={personaForShareCard} ref={shareCardRef} />
+        <ShareCard mbtiType={mbtiType} userName={userName ?? undefined} personaDescription={personaForShareCard} ref={shareCardRef} />
         <ShareCardActions cardRef={shareCardRef} />
       </section>
 
