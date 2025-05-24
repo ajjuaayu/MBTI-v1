@@ -21,17 +21,17 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { 
     title: "Personality Type", 
     description: "Unique and special.", 
-    iconHint: "star sparkle", // Default icon hint
-    shareCardGradient: "bg-gradient-to-br from-primary via-accent to-secondary" // Default gradient
+    iconHint: "star sparkle",
+    shareCardGradient: "bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600" // Fallback gradient
   };
   
   const displayDescription = personaDescription || typeInfo.description;
   const cardName = userName || "You";
-  const cardGradient = typeInfo.shareCardGradient || "bg-gradient-to-br from-gray-400 to-gray-600"; // Fallback gradient
+  const cardGradient = typeInfo.shareCardGradient || "bg-gradient-to-br from-gray-400 to-gray-600";
 
   return (
     <div ref={ref} className={`p-1 rounded-xl shadow-2xl ${cardGradient}`}>
-      <Card className="w-full max-w-md mx-auto !border-0">
+      <Card className="w-full max-w-md mx-auto"> {/* Removed !border-0 */}
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
           <div 
             className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg"
@@ -191,7 +191,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
         socialMetaTagInfo: {
           socialTitle: socialTitle,
           socialDescription: socialDescription,
-          ...(socialImage && { socialImageLink: socialImage }), // Conditionally add image link
+          ...(socialImage && { socialImageLink: socialImage }),
         }
       },
       suffix: {
