@@ -62,6 +62,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (isValidType && typeof personaForShareCard === 'undefined' && MBTI_DESCRIPTIONS[mbtiType]) {
+      // Initialize with the full static description
       setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description);
     }
   }, [isValidType, mbtiType, personaForShareCard]);
@@ -150,12 +151,12 @@ export default function ResultsPage() {
         <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-transparent bg-clip-text">
           {greetingName}You are {mbtiType}!
         </h1>
-        <p className="text-2xl text-muted-foreground mt-2">{typeDetails.title}</p>
+        <p className="text-2xl text-foreground/80 mt-2">{typeDetails.title}</p>
         <p className="text-lg text-foreground mt-4 max-w-2xl mx-auto">{typeDetails.description}</p>
       </header>
 
       <section id="share-section" className="max-w-md mx-auto">
-        <h2 className="text-2xl font-semibold text-center mb-4">Your Shareable Card & Link</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4 text-foreground">Your Shareable Card & Link</h2>
         <ShareCard mbtiType={mbtiType} userName={userName ?? undefined} personaDescription={personaForShareCard} ref={shareCardRef} />
         <ShareCardActions cardRef={shareCardRef} mbtiType={mbtiType} userName={userName ?? undefined} />
       </section>
@@ -170,7 +171,7 @@ export default function ResultsPage() {
             <Sparkles className="h-7 w-7 text-primary" />
             <div>
               <CardTitle className="text-2xl">Key Traits of {mbtiType}</CardTitle>
-              <CardDescription>Common characteristics associated with your type.</CardDescription>
+              <CardDescription className="text-foreground/70">Common characteristics associated with your type.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -189,7 +190,7 @@ export default function ResultsPage() {
             <Award className="h-7 w-7 text-primary" />
             <div>
               <CardTitle className="text-2xl">Notable {mbtiType}s</CardTitle>
-              <CardDescription>Famous individuals often associated with this personality type.</CardDescription>
+              <CardDescription className="text-foreground/70">Famous individuals often associated with this personality type.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -213,7 +214,7 @@ export default function ResultsPage() {
 
       <Card className="text-center shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl">What's Next?</CardTitle>
+          <CardTitle className="text-2xl text-foreground">What's Next?</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-4">
           <Button asChild variant="outline" size="lg">
