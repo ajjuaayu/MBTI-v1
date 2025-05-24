@@ -12,16 +12,14 @@ import ShareCard, { ShareCardActions } from "@/components/results/ShareCard";
 import MBTIBarChart from "@/components/results/MBTIBarChart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquareHeart, Home, Repeat } from "lucide-react"; // Removed User, Share icons
+import { MessageSquareHeart, Home, Repeat } from "lucide-react"; 
 import type { MbtiScores } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import CanvasPlaceholder from "@/components/ui/CanvasPlaceholder";
-
 
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams(); // For reading URL query parameters from dynamic links
+  const searchParams = useSearchParams(); 
   const mbtiType = params.mbtiType as MBTIType;
   
   const [isValidType, setIsValidType] = useState(false);
@@ -38,7 +36,7 @@ export default function ResultsPage() {
       
       const nameFromUrl = searchParams.get('name');
       if (nameFromUrl) {
-        setUserName(decodeURIComponent(nameFromUrl)); // Decode name from URL
+        setUserName(decodeURIComponent(nameFromUrl)); 
         localStorage.setItem('userName', decodeURIComponent(nameFromUrl)); 
       } else {
         const storedName = localStorage.getItem('userName');
@@ -96,24 +94,46 @@ export default function ResultsPage() {
 
   const typeDetails = MBTI_DESCRIPTIONS[mbtiType];
   if (!typeDetails) {
-    return <p>Error: Type details not found.</p>;
+    // This should ideally not happen with valid MBTI types
+    return (
+         <Card className="max-w-lg mx-auto my-10 text-center">
+            <CardHeader>
+              <CardTitle>Personality Type Details Not Found</CardTitle>
+              <CardDescription>We couldn't load the details for {mbtiType}.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/">Go to Homepage</Link>
+              </Button>
+            </CardContent>
+        </Card>
+    );
   }
   const greetingName = userName ? `${userName}, ` : "";
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-10">
       <header className="text-center">
-        <div className="inline-block p-1 bg-gradient-to-br from-primary via-accent to-secondary rounded-full mb-4 shadow-md overflow-hidden">
-          <CanvasPlaceholder
-            canvasWidth={80}
-            canvasHeight={80}
-            textToDraw={mbtiType}
-            backgroundColorVar="--primary"
-            textColorVar="--primary-foreground"
-            className="rounded-full"
-            dataAiHint={typeDetails.iconHint}
-            aria-label={`${mbtiType} icon`}
-          />
+        <div 
+          className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg border-4 border-primary"
+          data-ai-hint={typeDetails.iconHint}
+          aria-label={`${mbtiType} icon`}
+        >
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            <circle cx="50" cy="50" r="50" fill="hsl(var(--primary))" />
+            <text
+              x="50%"
+              y="50%"
+              dominantBaseline="middle"
+              textAnchor="middle"
+              fill="hsl(var(--primary-foreground))"
+              fontSize="38" 
+              fontFamily="var(--font-geist-sans), Helvetica Neue, sans-serif"
+              fontWeight="bold"
+            >
+              {mbtiType}
+            </text>
+          </svg>
         </div>
         <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-transparent bg-clip-text">
           {greetingName}You are {mbtiType}!

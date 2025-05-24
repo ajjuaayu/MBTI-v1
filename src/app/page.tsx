@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Brain, Users, Sparkles } from "lucide-react";
 import { APP_NAME, APP_DESCRIPTION } from "@/config/site";
-import CanvasPlaceholder from "@/components/ui/CanvasPlaceholder";
+import React from "react";
 
 export default function HomePage() {
   return (
@@ -42,21 +42,18 @@ export default function HomePage() {
           icon={<Brain className="h-8 w-8 text-primary" />}
           title="Discover Yourself"
           description="Take our insightful quizzes to find your MBTI type and learn what makes you unique."
-          canvasText="brain network"
           aiHint="brain network"
         />
         <FeatureCard
           icon={<Users className="h-8 w-8 text-primary" />}
           title="Connect & Compare"
           description="See how you stack up against friends and the community. Explore compatibility with other types."
-          canvasText="people connection"
           aiHint="people connection"
         />
         <FeatureCard
           icon={<Sparkles className="h-8 w-8 text-primary" />}
           title="AI-Powered Insights"
           description="Get unique AI-generated persona descriptions and chat with an AI version of any MBTI type."
-          canvasText="ai future"
           aiHint="ai future"
         />
       </section>
@@ -77,14 +74,13 @@ export default function HomePage() {
 }
 
 interface FeatureCardProps {
-  icon: React.ReactNode;
+  icon: React.ReactElement; // Expecting a Lucide icon element
   title: string;
   description: string;
-  canvasText: string; // Renamed from imageAlt for clarity with canvas
   aiHint: string;
 }
 
-function FeatureCard({ icon, title, description, canvasText, aiHint }: FeatureCardProps) {
+function FeatureCard({ icon, title, description, aiHint }: FeatureCardProps) {
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader className="flex flex-row items-start gap-4 bg-accent/50 p-4">
@@ -92,17 +88,12 @@ function FeatureCard({ icon, title, description, canvasText, aiHint }: FeatureCa
         <CardTitle className="text-2xl mt-1">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4 flex-grow flex flex-col">
-        <div className="relative w-full h-40 mb-4 rounded-md overflow-hidden border border-border">
-          <CanvasPlaceholder
-            canvasWidth={300} // Intrinsic width of the canvas drawing
-            canvasHeight={160} // Intrinsic height of the canvas drawing
-            textToDraw={canvasText}
-            backgroundColorVar="--accent"
-            textColorVar="--accent-foreground"
-            className="w-full h-full object-cover" // CSS to make it fill the container
-            dataAiHint={aiHint}
-            aria-label={description} // For accessibility
-          />
+        <div 
+          className="relative w-full h-40 mb-4 rounded-md overflow-hidden border border-border bg-accent/70 flex items-center justify-center"
+          data-ai-hint={aiHint}
+          aria-label={description} // For accessibility
+        >
+          {React.cloneElement(icon, { className: "h-16 w-16 text-primary opacity-60" })}
         </div>
         <CardDescription className="text-base">{description}</CardDescription>
       </CardContent>

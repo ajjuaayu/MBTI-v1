@@ -7,7 +7,7 @@ import { simulateChat } from "@/ai/flows/simulated-chat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // Removed AvatarImage
 import { Send, Bot, User, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ChatMessage } from "@/lib/types";
@@ -25,9 +25,9 @@ export default function ChatInterface({ targetMbtiType }: ChatInterfaceProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const targetTypeDetails = MBTI_DESCRIPTIONS[targetMbtiType];
+  const aiAvatarInitials = targetMbtiType.substring(0, 2).toUpperCase();
 
   useEffect(() => {
-    // Initial system message
     setMessages([
       {
         id: "system-initial",
@@ -39,7 +39,6 @@ export default function ChatInterface({ targetMbtiType }: ChatInterfaceProps) {
   }, [targetMbtiType, targetTypeDetails?.title]);
   
   useEffect(() => {
-    // Scroll to bottom when new messages are added
     if (scrollAreaRef.current) {
       const scrollElement = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
       if (scrollElement) {
@@ -91,9 +90,14 @@ export default function ChatInterface({ targetMbtiType }: ChatInterfaceProps) {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl h-[70vh] flex flex-col">
       <CardHeader className="flex flex-row items-center space-x-4 p-4 border-b">
-        <Avatar>
-          <AvatarImage src={`https://placehold.co/40x40.png?text=${targetMbtiType.substring(0,2)}`} alt={targetMbtiType} data-ai-hint={targetTypeDetails?.iconHint || "abstract character"}/>
-          <AvatarFallback>{targetMbtiType.substring(0, 2)}</AvatarFallback>
+        <Avatar className="h-10 w-10">
+           <div 
+            className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+            data-ai-hint={targetTypeDetails?.iconHint || "abstract character"}
+            aria-label={targetMbtiType}
+          >
+            {aiAvatarInitials}
+          </div>
         </Avatar>
         <div>
           <CardTitle className="text-xl">Chat with {targetMbtiType}</CardTitle>
@@ -112,8 +116,13 @@ export default function ChatInterface({ targetMbtiType }: ChatInterfaceProps) {
               >
                 {msg.sender === "ai" && (
                   <Avatar className="h-8 w-8">
-                     <AvatarImage src={`https://placehold.co/40x40.png?text=${targetMbtiType.substring(0,2)}`} alt={targetMbtiType} data-ai-hint={targetTypeDetails?.iconHint || "abstract character"}/>
-                    <AvatarFallback><Bot className="h-4 w-4" /></AvatarFallback>
+                     <div 
+                        className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+                        data-ai-hint={targetTypeDetails?.iconHint || "abstract character"}
+                        aria-label={targetMbtiType}
+                      >
+                       {aiAvatarInitials}
+                     </div>
                   </Avatar>
                 )}
                 <div
@@ -137,7 +146,11 @@ export default function ChatInterface({ targetMbtiType }: ChatInterfaceProps) {
             {isLoading && (
               <div className="flex justify-start items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback><Bot className="h-4 w-4" /></AvatarFallback>
+                  <div 
+                    className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+                  >
+                    {aiAvatarInitials}
+                  </div>
                 </Avatar>
                 <div className="bg-accent text-accent-foreground rounded-xl px-4 py-2 shadow">
                   <Loader2 className="h-5 w-5 animate-spin" />

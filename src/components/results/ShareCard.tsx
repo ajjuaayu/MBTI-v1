@@ -5,7 +5,6 @@ import { forwardRef, useState, useEffect } from "react";
 import type { MBTIType } from "@/config/site";
 import { MBTI_DESCRIPTIONS, APP_NAME } from "@/config/site";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import CanvasPlaceholder from "@/components/ui/CanvasPlaceholder";
 import { Button } from "@/components/ui/button";
 import { Share2, Download, Link as LinkIcon, Loader2 } from "lucide-react";
 import html2canvas from 'html2canvas';
@@ -34,17 +33,26 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
     <div ref={ref} className="bg-gradient-to-br from-primary via-accent to-secondary p-1 rounded-xl shadow-2xl">
       <Card className="w-full max-w-md mx-auto !border-0">
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
-          <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg bg-primary">
-            <CanvasPlaceholder
-              canvasWidth={100}
-              canvasHeight={100}
-              textToDraw={mbtiType}
-              backgroundColorVar="--primary" // Ensure this is a valid CSS var name
-              textColorVar="--primary-foreground"   // Ensure this is a valid CSS var name
-              className="w-full h-full object-cover" // CSS to make it fill the container
-              dataAiHint={typeInfo.iconHint}
-              aria-label={`${mbtiType} icon`}
-            />
+          <div 
+            className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg"
+            data-ai-hint={typeInfo.iconHint}
+            aria-label={`${mbtiType} icon`}
+          >
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              <circle cx="50" cy="50" r="50" fill="hsl(var(--primary))" />
+              <text
+                x="50%"
+                y="50%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="hsl(var(--primary-foreground))"
+                fontSize="38"
+                fontFamily="var(--font-geist-sans), Helvetica Neue, sans-serif"
+                fontWeight="bold"
+              >
+                {mbtiType}
+              </text>
+            </svg>
           </div>
           <p className="text-sm font-medium text-primary tracking-wider uppercase">{cardName}'s {APP_NAME} Result</p>
           <CardTitle className="text-4xl font-bold text-foreground mt-1">{mbtiType}</CardTitle>
@@ -82,9 +90,9 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
       try {
         const canvas = await html2canvas(cardRef.current, { 
             scale: 2, 
-            backgroundColor: null,
-            logging: false, // Reduce console noise
-            useCORS: true // Important for external resources if any (though canvas itself is local)
+            backgroundColor: null, // Attempt to make background transparent for the gradient div
+            logging: false, 
+            useCORS: true 
         });
         canvas.toBlob(async (blob) => {
           if (blob && navigator.share) {
@@ -97,13 +105,12 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
               });
             } catch (error) {
               console.error("Error sharing image:", error);
-              // Fallback to download if sharing fails or is cancelled by user
               if ((error as Error).name !== 'AbortError') {
-                handleDownload(); // Attempt download
+                handleDownload(); 
                 toast({ title: "Sharing Cancelled or Failed", description: "Image downloaded instead.", variant: "default" });
               }
             }
-          } else if (blob) { // Fallback for browsers that don't support navigator.share with files
+          } else if (blob) { 
             handleDownload();
           } else {
              toast({ title: "Error", description: "Could not generate image for sharing.", variant: "destructive" });
@@ -161,13 +168,8 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
       dynamicLinkInfo: {
         domainUriPrefix: dynamicLinksDomain.startsWith("http") ? dynamicLinksDomain : `https://${dynamicLinksDomain}`,
         link: deepLink,
-        androidInfo: {
-          // androidPackageName: "com.example.typecast" 
-        },
-        iosInfo: {
-          // iosBundleId: "com.example.typecast"
-          // iosAppStoreId: "YOUR_APP_STORE_ID"
-        },
+        androidInfo: {},
+        iosInfo: {},
         socialMetaTagInfo: {
           socialTitle: socialTitle,
           socialDescription: socialDescription,
