@@ -13,22 +13,24 @@ import { useToast } from "@/hooks/use-toast";
 interface ShareCardProps {
   mbtiType: MBTIType;
   userName?: string;
-  personaDescription?: string; // This will be the full AI description if fetched, or full static description
+  personaDescription?: string; 
 }
 
 // eslint-disable-next-line react/display-name
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userName, personaDescription }, ref) => {
-  const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { title: "Personality Type", description: "Unique and special.", iconHint: "star sparkle" };
+  const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { 
+    title: "Personality Type", 
+    description: "Unique and special.", 
+    iconHint: "star sparkle",
+    shareCardGradient: "bg-gradient-to-br from-primary via-accent to-secondary" // Default gradient
+  };
   
-  // The `personaDescription` prop now directly holds the desired full description 
-  // (AI-generated if available, otherwise the full static description).
-  // The static title from typeInfo will always be used in the header.
   const displayDescription = personaDescription || typeInfo.description;
-
   const cardName = userName || "You";
+  const cardGradient = typeInfo.shareCardGradient;
 
   return (
-    <div ref={ref} className="bg-gradient-to-br from-primary via-accent to-secondary p-1 rounded-xl shadow-2xl">
+    <div ref={ref} className={`${cardGradient} p-1 rounded-xl shadow-2xl`}>
       <Card className="w-full max-w-md mx-auto !border-0">
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
           <div 
@@ -58,11 +60,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
           </div>
           <p className="text-sm font-medium text-primary tracking-wider uppercase">{cardName}'s {APP_NAME} Result</p>
           <CardTitle className="text-4xl font-bold text-foreground mt-1">{mbtiType}</CardTitle>
-          <p className="text-xl text-muted-foreground">{typeInfo.title}</p> {/* Always use the static title here */}
+          <p className="text-xl text-muted-foreground">{typeInfo.title}</p>
         </CardHeader>
         <CardContent className="p-6 text-center bg-background">
           <p className="text-lg text-foreground mb-4 leading-relaxed">
-            {displayDescription} {/* Use the prepared full description */}
+            {displayDescription}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
             Discover your type at {APP_NAME}!
@@ -161,26 +163,31 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     const dynamicLinksDomain = process.env.NEXT_PUBLIC_FIREBASE_DYNAMIC_LINKS_DOMAIN;
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
+    // NEXT_PUBLIC_APP_DOMAIN is not needed for the deep link itself if we construct it directly
+    const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourdefaultdomain.com'; // Fallback for server environment
+
     const socialImage = process.env.NEXT_PUBLIC_SOCIAL_SHARE_IMAGE_URL;
 
-    if (!apiKey || !dynamicLinksDomain || !appDomain) {
-      console.error("Firebase Dynamic Links or App Domain configuration is missing.");
+    if (!apiKey || !dynamicLinksDomain) {
+      console.error("Firebase Dynamic Links configuration is missing.");
       toast({ id: toastId, type: "foreground", variant: "destructive", title: "Configuration Error", description: "Sharing feature is not properly configured.", duration: 5000 });
       setIsGeneratingLink(false);
       return;
     }
+    
+    const deepLinkPath = `/quiz/results/${mbtiType}${userName ? `?name=${encodeURIComponent(userName)}` : ''}`;
+    const deepLink = `${appBaseUrl}${deepLinkPath}`;
 
-    const deepLink = `https://${appDomain}/quiz/results/${mbtiType}${userName ? `?name=${encodeURIComponent(userName)}` : ''}`;
+    const typeDetails = MBTI_DESCRIPTIONS[mbtiType];
     const socialTitle = `${userName ? userName + "'s" : "My"} ${APP_NAME} Result: ${mbtiType}!`;
-    const socialDescription = `I discovered I'm ${mbtiType} (${MBTI_DESCRIPTIONS[mbtiType]?.title || ''}). Find out your personality type with ${APP_NAME}!`;
+    const socialDescription = `I discovered I'm ${mbtiType} (${typeDetails?.title || ''}). Find out your personality type with ${APP_NAME}!`;
 
     const dynamicLinkPayload = {
       dynamicLinkInfo: {
         domainUriPrefix: dynamicLinksDomain.startsWith("http") ? dynamicLinksDomain : `https://${dynamicLinksDomain}`,
         link: deepLink,
-        androidInfo: {}, // Add androidPackageName if you have an Android app
-        iosInfo: {}, // Add iosBundleId if you have an iOS app
+        androidInfo: {}, 
+        iosInfo: {}, 
         socialMetaTagInfo: {
           socialTitle: socialTitle,
           socialDescription: socialDescription,
@@ -219,7 +226,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
         toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready." });
       } else {
         navigator.clipboard.writeText(shortLink);
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied." });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied to clipboard." });
       }
     } catch (error: any) {
       console.error("Error sharing dynamic link:", error);
