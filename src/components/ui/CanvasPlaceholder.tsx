@@ -46,16 +46,20 @@ const CanvasPlaceholder: React.FC<CanvasPlaceholderProps> = ({
 
     const computedStyle = typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null;
     
-    const formatHsl = (hslString: string | undefined | null): string => {
-      if (!hslString) return '#cccccc'; // Default fallback color
-      const parts = hslString.trim().split(' ');
+    const formatHslForCanvas = (hslVarName: string, defaultColor: string): string => {
+      if (!computedStyle) return defaultColor;
+      const hslString = computedStyle.getPropertyValue(hslVarName).trim();
+      if (!hslString) return defaultColor;
+      // Assumes HSL is stored as "H S% L%" e.g. "240 60% 97%"
+      const parts = hslString.split(' ');
       if (parts.length === 3) return `hsl(${parts[0]}, ${parts[1]}, ${parts[2]})`;
-      if (parts.length === 1 && parts[0].includes(',')) return `hsl(${parts[0]})`; // for direct hsl values
-      return hslString; // fallback for direct color names or hex
+      // Fallback for direct color names or hex if a variable doesn't conform
+      if (CSS.supports('color', hslString)) return hslString;
+      return defaultColor;
     };
 
-    const bgColor = computedStyle ? formatHsl(computedStyle.getPropertyValue(backgroundColorVar)) : '#f0f0f0';
-    const fgColor = computedStyle ? formatHsl(computedStyle.getPropertyValue(textColorVar)) : '#333333';
+    const bgColor = formatHslForCanvas(backgroundColorVar, '#E0E0E0'); // Light gray fallback
+    const fgColor = formatHslForCanvas(textColorVar, '#333333');   // Dark gray fallback
 
     // Clear canvas
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -67,35 +71,44 @@ const CanvasPlaceholder: React.FC<CanvasPlaceholderProps> = ({
     // Draw text
     ctx.fillStyle = fgColor;
     
-    // Dynamically adjust font size
-    const baseFontSize = Math.min(canvasWidth / Math.max(textToDraw.length, 5) * 1.2, canvasHeight * 0.3);
-    ctx.font = `bold ${Math.max(12, baseFontSize)}px sans-serif`; // Ensure minimum font size
+    // Dynamically adjust font size - aiming for text to fill a good portion of height/width
+    // Consider typical character aspect ratio (width ~0.5 * height)
+    const maxFontSizeBasedOnWidth = canvasWidth / Math.max(textToDraw.length * 0.6, 1); // Adjusted factor
+    const maxFontSizeBasedOnHeight = canvasHeight * 0.5; // Allow text to take up to 50% of height
+    const baseFontSize = Math.min(maxFontSizeBasedOnWidth, maxFontSizeBasedOnHeight, 50); // Cap max font size
+    
+    ctx.font = `bold ${Math.max(12, baseFontSize)}px "Geist Sans", "Helvetica Neue", sans-serif`; // Using Geist Sans from layout
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Simple text wrapping if needed (basic version)
+    // Simple text wrapping if needed (basic version for 2 lines)
     const words = textToDraw.split(' ');
-    if (words.length > 2 && canvasWidth < 200) { // Very basic condition for wrapping
-        const line1 = words.slice(0, Math.ceil(words.length / 2)).join(' ');
-        const line2 = words.slice(Math.ceil(words.length / 2)).join(' ');
-        ctx.fillText(line1, canvasWidth / 2, canvasHeight / 2 - baseFontSize * 0.6);
-        ctx.fillText(line2, canvasWidth / 2, canvasHeight / 2 + baseFontSize * 0.6);
+    // Trigger wrapping if text likely exceeds 80% of canvas width or has many words and canvas is small
+    const textMetrics = ctx.measureText(textToDraw);
+    if ((textMetrics.width > canvasWidth * 0.8 && words.length > 1) || (words.length > 2 && canvasWidth < 150 && textToDraw.length > 10)) { 
+        const midPoint = Math.ceil(words.length / 2);
+        const line1 = words.slice(0, midPoint).join(' ');
+        const line2 = words.slice(midPoint).join(' ');
+        const lineHeight = baseFontSize * 1.2; // Add some line spacing
+        ctx.fillText(line1, canvasWidth / 2, canvasHeight / 2 - lineHeight / 2);
+        ctx.fillText(line2, canvasWidth / 2, canvasHeight / 2 + lineHeight / 2);
     } else {
         ctx.fillText(textToDraw, canvasWidth / 2, canvasHeight / 2);
     }
 
-  }, [canvasWidth, canvasHeight, textToDraw, backgroundColorVar, textColorVar, props.id]); // Added props.id to dependencies if it changes
+  }, [canvasWidth, canvasHeight, textToDraw, backgroundColorVar, textColorVar, props.id]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={canvasWidth} // Initial width for SSR, JS will override with DPI scaling
-      height={canvasHeight} // Initial height for SSR
-      className={cn(className)}
+      // width and height attributes are set by JS for DPR scaling
+      className={cn("block", className)} // Added block display
       data-ai-hint={dataAiHint}
+      aria-label={props['aria-label'] || `Placeholder image for ${textToDraw}`}
       {...props}
     />
   );
 };
 
 export default CanvasPlaceholder;
+
