@@ -2,7 +2,7 @@
 "use client"; // Required for useEffect, useState, localStorage, and useRef
 
 import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation"; 
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { MBTIType } from "@/config/site";
 import { MBTI_TYPES, MBTI_DESCRIPTIONS, APP_NAME } from "@/config/site";
@@ -11,17 +11,18 @@ import CompatibilityDisplay from "@/components/results/CompatibilityDisplay";
 import ShareCard, { ShareCardActions } from "@/components/results/ShareCard";
 import MBTIBarChart from "@/components/results/MBTIBarChart";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquareHeart, Home, Repeat } from "lucide-react"; 
+import { MessageSquareHeart, Home, Repeat, Sparkles, Award, Info } from "lucide-react";
 import type { MbtiScores } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams(); 
+  const searchParams = useSearchParams();
   const mbtiType = params.mbtiType as MBTIType;
-  
+
   const [isValidType, setIsValidType] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [scores, setScores] = useState<MbtiScores | null>(null);
@@ -33,11 +34,11 @@ export default function ResultsPage() {
   useEffect(() => {
     if (mbtiType && MBTI_TYPES.includes(mbtiType)) {
       setIsValidType(true);
-      
+
       const nameFromUrl = searchParams.get('name');
       if (nameFromUrl) {
-        setUserName(decodeURIComponent(nameFromUrl)); 
-        localStorage.setItem('userName', decodeURIComponent(nameFromUrl)); 
+        setUserName(decodeURIComponent(nameFromUrl));
+        localStorage.setItem('userName', decodeURIComponent(nameFromUrl));
       } else {
         const storedName = localStorage.getItem('userName');
         if (storedName) {
@@ -53,15 +54,13 @@ export default function ResultsPage() {
           console.error("Failed to parse scores from localStorage", e);
         }
       }
-    } else if (mbtiType) { 
-      router.replace("/404"); 
+    } else if (mbtiType) {
+      router.replace("/404");
     }
     setIsLoading(false);
   }, [mbtiType, router, searchParams]);
 
   useEffect(() => {
-    // Initialize personaForShareCard with the full static description.
-    // This will be overridden if an AI persona is fetched later by handleAIPersonaFetched.
     if (isValidType && typeof personaForShareCard === 'undefined' && MBTI_DESCRIPTIONS[mbtiType]) {
       setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description);
     }
@@ -76,6 +75,8 @@ export default function ResultsPage() {
     return (
       <div className="space-y-8 max-w-4xl mx-auto py-8">
         <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -119,8 +120,10 @@ export default function ResultsPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-10">
       <header className="text-center">
-        <div 
-          className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg border-4 border-primary"
+        <div
+          className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg 
+                     shadow-primary/40 hover:shadow-primary/60 transition-shadow duration-300
+                     [filter:drop-shadow(0_0_8px_hsl(var(--primary)/0.5))] hover:[filter:drop-shadow(0_0_15px_hsl(var(--primary)/0.7))]"
         >
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
             <defs>
@@ -136,7 +139,7 @@ export default function ResultsPage() {
               dominantBaseline="middle"
               textAnchor="middle"
               fill="hsl(var(--primary-foreground))"
-              fontSize="38" 
+              fontSize="38"
               fontFamily="var(--font-geist-sans), Helvetica Neue, sans-serif"
               fontWeight="bold"
             >
@@ -160,6 +163,52 @@ export default function ResultsPage() {
       {scores && <MBTIBarChart scores={scores} />}
       
       <PersonaDisplay mbtiType={mbtiType} onAIPersonaFetched={handleAIPersonaFetched} />
+
+      {typeDetails.topTraits && typeDetails.topTraits.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center gap-3">
+            <Sparkles className="h-7 w-7 text-primary" />
+            <div>
+              <CardTitle className="text-2xl">Key Traits of {mbtiType}</CardTitle>
+              <CardDescription>Common characteristics associated with your type.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {typeDetails.topTraits.map((trait) => (
+              <Badge key={trait} variant="secondary" className="text-base px-3 py-1">
+                {trait}
+              </Badge>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {typeDetails.famousExamples && typeDetails.famousExamples.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center gap-3">
+            <Award className="h-7 w-7 text-primary" />
+            <div>
+              <CardTitle className="text-2xl">Notable {mbtiType}s</CardTitle>
+              <CardDescription>Famous individuals often associated with this personality type.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {typeDetails.famousExamples.map((example) => (
+                <li key={example.name} className="flex items-center justify-between p-2 bg-accent/50 rounded-md">
+                  <span className="font-medium">{example.name}</span>
+                  <span className="text-sm text-muted-foreground">{example.field}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-4 flex items-center">
+              <Info className="h-3 w-3 mr-1.5 shrink-0" />
+              Personality typing of public figures is speculative and based on observed traits.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <CompatibilityDisplay mbtiType={mbtiType} />
 
       <Card className="text-center shadow-lg">
@@ -187,3 +236,5 @@ export default function ResultsPage() {
     </div>
   );
 }
+
+    
