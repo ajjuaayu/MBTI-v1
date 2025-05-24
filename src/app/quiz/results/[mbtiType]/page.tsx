@@ -2,7 +2,7 @@
 "use client"; // Required for useEffect, useState, localStorage, and useRef
 
 import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
 import Link from "next/link";
 import type { MBTIType } from "@/config/site";
 import { MBTI_TYPES, MBTI_DESCRIPTIONS, APP_NAME } from "@/config/site";
@@ -12,7 +12,7 @@ import ShareCard, { ShareCardActions } from "@/components/results/ShareCard";
 import MBTIBarChart from "@/components/results/MBTIBarChart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquareHeart, Share, Home, Repeat, User } from "lucide-react";
+import { MessageSquareHeart, Home, Repeat } from "lucide-react"; // Removed User, Share icons
 import type { MbtiScores } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import Image from "next/image";
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams(); // For reading URL query parameters from dynamic links
   const mbtiType = params.mbtiType as MBTIType;
   
   const [isValidType, setIsValidType] = useState(false);
@@ -33,26 +34,38 @@ export default function ResultsPage() {
   useEffect(() => {
     if (mbtiType && MBTI_TYPES.includes(mbtiType)) {
       setIsValidType(true);
+      
+      // Check for name from URL (from dynamic link) first, then localStorage
+      const nameFromUrl = searchParams.get('name');
+      if (nameFromUrl) {
+        setUserName(nameFromUrl);
+        localStorage.setItem('userName', nameFromUrl); // Optionally save it if shared via link
+      } else {
+        const storedName = localStorage.getItem('userName');
+        if (storedName) {
+          setUserName(storedName);
+        }
+      }
+
       const storedScores = localStorage.getItem('quizScores');
       if (storedScores) {
         try {
           setScores(JSON.parse(storedScores));
         } catch (e) {
           console.error("Failed to parse scores from localStorage", e);
+          // If scores are crucial and not present (e.g. direct link access without quiz),
+          // you might want to redirect or show a message.
+          // For now, we allow viewing results without scores (bar chart will be hidden).
         }
-      }
-      const storedName = localStorage.getItem('userName');
-      if (storedName) {
-        setUserName(storedName);
       }
     } else if (mbtiType) { 
       router.replace("/404"); 
     }
     setIsLoading(false);
-  }, [mbtiType, router]);
+  }, [mbtiType, router, searchParams]);
 
   useEffect(() => {
-    if (isValidType && typeof personaForShareCard === 'undefined') {
+    if (isValidType && typeof personaForShareCard === 'undefined' && MBTI_DESCRIPTIONS[mbtiType]) {
       setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description.split('.')[0] + '.');
     }
   }, [isValidType, mbtiType, personaForShareCard]);
@@ -69,6 +82,8 @@ export default function ResultsPage() {
   }
 
   if (!isValidType) {
+    // This case should ideally be handled by the router.replace in useEffect,
+    // but as a fallback:
     return (
       <Card className="max-w-lg mx-auto my-10 text-center">
         <CardHeader>
@@ -85,6 +100,10 @@ export default function ResultsPage() {
   }
 
   const typeDetails = MBTI_DESCRIPTIONS[mbtiType];
+  if (!typeDetails) {
+     // Should not happen if isValidType is true, but good for TS and robustness
+    return <p>Error: Type details not found.</p>;
+  }
   const greetingName = userName ? `${userName}, ` : "";
 
   return (
@@ -108,9 +127,9 @@ export default function ResultsPage() {
       </header>
 
       <section id="share-section" className="max-w-md mx-auto">
-        <h2 className="text-2xl font-semibold text-center mb-4">Your Shareable Card</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4">Your Shareable Card & Link</h2>
         <ShareCard mbtiType={mbtiType} userName={userName ?? undefined} personaDescription={personaForShareCard} ref={shareCardRef} />
-        <ShareCardActions cardRef={shareCardRef} />
+        <ShareCardActions cardRef={shareCardRef} mbtiType={mbtiType} userName={userName ?? undefined} />
       </section>
 
       {scores && <MBTIBarChart scores={scores} />}

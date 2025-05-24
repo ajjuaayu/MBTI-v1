@@ -1,25 +1,26 @@
 
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import type { MBTIType } from "@/config/site";
 import { MBTI_DESCRIPTIONS, APP_NAME } from "@/config/site";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Share2, Download } from "lucide-react";
-import html2canvas from 'html2canvas'; // Ensure this is installed: npm install html2canvas
+import { Share2, Download, Link as LinkIcon, Loader2 } from "lucide-react";
+import html2canvas from 'html2canvas';
+import { useToast } from "@/hooks/use-toast";
 
 interface ShareCardProps {
   mbtiType: MBTIType;
   userName?: string;
-  personaDescription?: string; // Optional: AI generated persona
+  personaDescription?: string;
 }
 
 // eslint-disable-next-line react/display-name
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userName, personaDescription }, ref) => {
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { title: "Personality Type", description: "Unique and special.", iconHint: "star sparkle" };
-  const displayTitle = personaDescription ? personaDescription.split(/[,.]/)[0] : typeInfo.title; // Use first part of AI persona as title if available
+  const displayTitle = personaDescription ? personaDescription.split(/[,.]/)[0] : typeInfo.title;
   const cardName = userName || "You";
 
   return (
@@ -44,7 +45,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
             {personaDescription ? personaDescription : typeInfo.description}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
-            Discover your type at typecast.site (example)
+            Discover your type at {process.env.NEXT_PUBLIC_APP_DOMAIN || "our website"}!
           </div>
         </CardContent>
         <CardFooter className="p-4 bg-accent/30 rounded-b-lg flex justify-center">
@@ -62,8 +63,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
 
 export default ShareCard;
 
-export const ShareCardActions = ({ cardRef }: { cardRef: React.RefObject<HTMLDivElement> }) => {
-  const handleShare = async () => {
+export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: React.RefObject<HTMLDivElement>, mbtiType: MBTIType, userName?: string }) => {
+  const { toast } = useToast();
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+
+  const handleShareImage = async () => {
     if (cardRef.current) {
       try {
         const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
@@ -73,28 +77,26 @@ export const ShareCardActions = ({ cardRef }: { cardRef: React.RefObject<HTMLDiv
             try {
               await navigator.share({
                 title: `My ${APP_NAME} Result!`,
-                text: `I got ${cardRef.current?.querySelector('h2[class*="text-4xl"]')?.textContent || 'my personality type'} on ${APP_NAME}! Check it out.`, // More specific selector for MBTI type
+                text: `I got ${mbtiType} on ${APP_NAME}! Check it out.`,
                 files: [file],
               });
             } catch (error) {
-              console.error("Error sharing:", error);
-              // Fallback for browsers that may not support sharing files or specific errors
-              alert("Sharing failed. You can try downloading the image and sharing it manually.");
+              console.error("Error sharing image:", error);
+              toast({ title: "Sharing Failed", description: "Could not share the image. Try downloading it.", variant: "destructive" });
             }
           } else if (blob) {
-            // Fallback for browsers that don't support navigator.share
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'typecast_result.png';
             link.click();
             URL.revokeObjectURL(link.href);
           } else {
-             alert("Could not generate image for sharing.");
+             toast({ title: "Error", description: "Could not generate image for sharing.", variant: "destructive" });
           }
         }, "image/png");
       } catch (error) {
         console.error("Error generating share image:", error);
-        alert("Could not generate image. Try taking a screenshot.");
+        toast({ title: "Image Generation Failed", description: "Could not generate image. Try screenshotting.", variant: "destructive" });
       }
     }
   };
@@ -110,17 +112,103 @@ export const ShareCardActions = ({ cardRef }: { cardRef: React.RefObject<HTMLDiv
         link.click();
       } catch (error) {
         console.error("Error generating download image:", error);
-        alert("Could not generate image for download.");
+        toast({ title: "Download Failed", description: "Could not generate image for download.", variant: "destructive" });
       }
     }
   };
 
+  const handleShareDynamicLink = async () => {
+    setIsGeneratingLink(true);
+    toast({ title: "Generating Share Link...", description: "Please wait a moment." });
+
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    const dynamicLinksDomain = process.env.NEXT_PUBLIC_FIREBASE_DYNAMIC_LINKS_DOMAIN;
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
+    const socialImage = process.env.NEXT_PUBLIC_SOCIAL_SHARE_IMAGE_URL;
+
+    if (!apiKey || !dynamicLinksDomain || !appDomain) {
+      console.error("Firebase Dynamic Links or App Domain configuration is missing.");
+      toast({ title: "Configuration Error", description: "Sharing feature is not properly configured. Please contact support.", variant: "destructive" });
+      setIsGeneratingLink(false);
+      return;
+    }
+
+    const deepLink = `https://${appDomain}/quiz/results/${mbtiType}${userName ? `?name=${encodeURIComponent(userName)}` : ''}`;
+    const socialTitle = `${userName ? userName + "'s" : "My"} ${APP_NAME} Result: ${mbtiType}!`;
+    const socialDescription = `I discovered I'm ${mbtiType} (${MBTI_DESCRIPTIONS[mbtiType]?.title || ''}). Find out your personality type with ${APP_NAME}!`;
+
+    const dynamicLinkPayload = {
+      dynamicLinkInfo: {
+        domainUriPrefix: dynamicLinksDomain.startsWith("http") ? dynamicLinksDomain : `https://${dynamicLinksDomain}`,
+        link: deepLink,
+        androidInfo: {
+          // Replace with your Android app's package name if you have one
+          // androidPackageName: "com.example.typecast" 
+        },
+        iosInfo: {
+          // Replace with your iOS app's bundle ID if you have one
+          // iosBundleId: "com.example.typecast"
+          // iosAppStoreId: "YOUR_APP_STORE_ID" // If you have an App Store ID
+        },
+        socialMetaTagInfo: {
+          socialTitle: socialTitle,
+          socialDescription: socialDescription,
+          socialImageLink: socialImage,
+        }
+      },
+      suffix: {
+        option: "SHORT"
+      }
+    };
+
+    try {
+      const response = await fetch(`https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dynamicLinkPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error creating dynamic link:', errorData);
+        throw new Error(errorData.error?.message || 'Failed to create dynamic link');
+      }
+
+      const data = await response.json();
+      const shortLink = data.shortLink;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: socialTitle,
+          text: `${socialDescription} Check it out:`,
+          url: shortLink,
+        });
+        toast({ title: "Link Shared!", description: "Dynamic link copied and ready to share." });
+      } else {
+        navigator.clipboard.writeText(shortLink);
+        toast({ title: "Link Copied!", description: "Dynamic link copied to clipboard." });
+      }
+    } catch (error: any) {
+      console.error("Error sharing dynamic link:", error);
+      toast({ title: "Sharing Failed", description: error.message || "Could not create or share the link.", variant: "destructive" });
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+
   return (
-    <div className="flex gap-4 mt-6 justify-center">
-      <Button onClick={handleShare} variant="outline" size="lg">
-        <Share2 className="mr-2 h-5 w-5" /> Share
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 justify-center">
+      <Button onClick={handleShareImage} variant="outline" size="lg" className="w-full">
+        <Share2 className="mr-2 h-5 w-5" /> Share Image
       </Button>
-      <Button onClick={handleDownload} size="lg">
+      <Button onClick={handleShareDynamicLink} variant="outline" size="lg" className="w-full" disabled={isGeneratingLink}>
+        {isGeneratingLink ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <LinkIcon className="mr-2 h-5 w-5" />}
+        Share Link
+      </Button>
+      <Button onClick={handleDownload} size="lg" className="w-full">
         <Download className="mr-2 h-5 w-5" /> Download
       </Button>
     </div>
