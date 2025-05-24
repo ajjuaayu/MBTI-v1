@@ -61,9 +61,11 @@ export default function ResultsPage() {
   }, [mbtiType, router, searchParams]);
 
   useEffect(() => {
-    if (isValidType && typeof personaForShareCard === 'undefined' && MBTI_DESCRIPTIONS[mbtiType]) {
-      // Initialize with the full static description
-      setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description);
+    // Initialize with the full static description if not already set or if mbtiType changes
+    if (isValidType && mbtiType && MBTI_DESCRIPTIONS[mbtiType]) {
+        if (typeof personaForShareCard === 'undefined' || !personaForShareCard.startsWith(MBTI_DESCRIPTIONS[mbtiType].description.substring(0,10))) {
+             setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description);
+        }
     }
   }, [isValidType, mbtiType, personaForShareCard]);
 
@@ -139,7 +141,7 @@ export default function ResultsPage() {
               y="50%"
               dominantBaseline="middle"
               textAnchor="middle"
-              fill="hsl(var(--primary-foreground))"
+              fill="hsl(0 0% 98%)"
               fontSize="38"
               fontFamily="var(--font-geist-sans), Helvetica Neue, sans-serif"
               fontWeight="bold"
@@ -170,7 +172,7 @@ export default function ResultsPage() {
           <CardHeader className="flex flex-row items-center gap-3">
             <Sparkles className="h-7 w-7 text-primary" />
             <div>
-              <CardTitle className="text-2xl">Key Traits of {mbtiType}</CardTitle>
+              <CardTitle className="text-2xl text-foreground">Key Traits of {mbtiType}</CardTitle>
               <CardDescription className="text-foreground/70">Common characteristics associated with your type.</CardDescription>
             </div>
           </CardHeader>
@@ -189,7 +191,7 @@ export default function ResultsPage() {
           <CardHeader className="flex flex-row items-center gap-3">
             <Award className="h-7 w-7 text-primary" />
             <div>
-              <CardTitle className="text-2xl">Notable {mbtiType}s</CardTitle>
+              <CardTitle className="text-2xl text-foreground">Notable {mbtiType}s</CardTitle>
               <CardDescription className="text-foreground/70">Famous individuals often associated with this personality type.</CardDescription>
             </div>
           </CardHeader>

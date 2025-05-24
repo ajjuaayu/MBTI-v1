@@ -22,7 +22,9 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
     title: "Personality Type", 
     description: "Unique and special.", 
     iconHint: "star sparkle",
-    shareCardGradient: "bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600" // Fallback gradient
+    shareCardGradient: "bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600", // Fallback gradient
+    topTraits: [],
+    famousExamples: []
   };
   
   const displayDescription = personaDescription || typeInfo.description;
@@ -31,7 +33,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
 
   return (
     <div ref={ref} className={`p-1 rounded-xl shadow-2xl ${cardGradient}`}>
-      <Card className="w-full max-w-md mx-auto"> {/* Removed !border-0 */}
+      <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
           <div 
             className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg"
@@ -49,7 +51,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
                 y="50%"
                 dominantBaseline="middle"
                 textAnchor="middle"
-                fill="hsl(var(--primary-foreground))"
+                fill="hsl(0 0% 98%)"
                 fontSize="38"
                 fontFamily="var(--font-geist-sans), Helvetica Neue, sans-serif"
                 fontWeight="bold"
@@ -158,15 +160,17 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
     setIsGeneratingLink(true);
     const { id: toastId } = toast({ 
       title: "Generating Share Link...", 
-      description: "Please wait.",
+      description: "Please wait a moment.",
       duration: 900000 // Keep open until manually dismissed or updated
     });
 
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     const dynamicLinksDomain = process.env.NEXT_PUBLIC_FIREBASE_DYNAMIC_LINKS_DOMAIN;
+    
+    // Ensure appBaseUrl is derived client-side
     const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourdefaultdomain.com'; 
-
     const socialImage = process.env.NEXT_PUBLIC_SOCIAL_SHARE_IMAGE_URL;
+
 
     if (!apiKey || !dynamicLinksDomain) {
       console.error("Firebase Dynamic Links configuration is missing.");
@@ -218,19 +222,19 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
       const shortLink = data.shortLink;
 
       if (navigator.share) {
-        await navigator.share({
+         await navigator.share({
           title: socialTitle,
           text: `${socialDescription} Check it out:`,
           url: shortLink,
         });
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready.", duration: 5000 });
+        toast.update(toastId, { title: "Link Shared!", description: "Dynamic link ready.", duration: 5000, type: "foreground", variant: "default" });
       } else {
         navigator.clipboard.writeText(shortLink);
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied to clipboard.", duration: 5000 });
+        toast.update(toastId, { title: "Link Copied!", description: "Dynamic link copied to clipboard.", duration: 5000, type: "foreground", variant: "default" });
       }
     } catch (error: any) {
       console.error("Error sharing dynamic link:", error);
-      toast({ id: toastId, type: "foreground", variant: "destructive", title: "Sharing Failed", description: error.message || "Could not create or share the link.", duration: 5000 });
+      toast.update(toastId, { title: "Sharing Failed", description: error.message || "Could not create or share the link.", duration: 5000, type: "foreground", variant: "destructive"});
     } finally {
       setIsGeneratingLink(false);
     }
@@ -252,3 +256,4 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
     </div>
   );
 };
+
