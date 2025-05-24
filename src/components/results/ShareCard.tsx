@@ -1,11 +1,11 @@
 
 "use client";
 
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import type { MBTIType } from "@/config/site";
 import { MBTI_DESCRIPTIONS, APP_NAME } from "@/config/site";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
+import CanvasPlaceholder from "@/components/ui/CanvasPlaceholder";
 import { Button } from "@/components/ui/button";
 import { Share2, Download, Link as LinkIcon, Loader2 } from "lucide-react";
 import html2canvas from 'html2canvas';
@@ -22,18 +22,28 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { title: "Personality Type", description: "Unique and special.", iconHint: "star sparkle" };
   const displayTitle = personaDescription ? personaDescription.split(/[,.]/)[0] : typeInfo.title;
   const cardName = userName || "You";
+  const [appDomain, setAppDomain] = useState("our website");
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setAppDomain(process.env.NEXT_PUBLIC_APP_DOMAIN || window.location.hostname);
+    }
+  }, []);
 
   return (
     <div ref={ref} className="bg-gradient-to-br from-primary via-accent to-secondary p-1 rounded-xl shadow-2xl">
       <Card className="w-full max-w-md mx-auto !border-0">
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
-          <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg">
-            <Image
-              src={`https://placehold.co/100x100.png?text=${mbtiType}`}
-              alt={mbtiType}
-              layout="fill"
-              objectFit="cover"
-              data-ai-hint={typeInfo.iconHint}
+          <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg bg-primary">
+            <CanvasPlaceholder
+              canvasWidth={100}
+              canvasHeight={100}
+              textToDraw={mbtiType}
+              backgroundColorVar="--primary" // Ensure this is a valid CSS var name
+              textColorVar="--primary-foreground"   // Ensure this is a valid CSS var name
+              className="w-full h-full object-cover" // CSS to make it fill the container
+              dataAiHint={typeInfo.iconHint}
+              aria-label={`${mbtiType} icon`}
             />
           </div>
           <p className="text-sm font-medium text-primary tracking-wider uppercase">{cardName}'s {APP_NAME} Result</p>
@@ -45,7 +55,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
             {personaDescription ? personaDescription : typeInfo.description}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
-            Discover your type at {process.env.NEXT_PUBLIC_APP_DOMAIN || "our website"}!
+            Discover your type at {appDomain}!
           </div>
         </CardContent>
         <CardFooter className="p-4 bg-accent/30 rounded-b-lg flex justify-center">
@@ -70,10 +80,15 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
   const handleShareImage = async () => {
     if (cardRef.current) {
       try {
-        const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+        const canvas = await html2canvas(cardRef.current, { 
+            scale: 2, 
+            backgroundColor: null,
+            logging: false, // Reduce console noise
+            useCORS: true // Important for external resources if any (though canvas itself is local)
+        });
         canvas.toBlob(async (blob) => {
           if (blob && navigator.share) {
-            const file = new File([blob], "typecast_result.png", { type: "image/png" });
+            const file = new File([blob], `${APP_NAME.toLowerCase()}_result.png`, { type: "image/png" });
             try {
               await navigator.share({
                 title: `My ${APP_NAME} Result!`,
@@ -82,14 +97,14 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
               });
             } catch (error) {
               console.error("Error sharing image:", error);
-              toast({ title: "Sharing Failed", description: "Could not share the image. Try downloading it.", variant: "destructive" });
+              // Fallback to download if sharing fails or is cancelled by user
+              if ((error as Error).name !== 'AbortError') {
+                handleDownload(); // Attempt download
+                toast({ title: "Sharing Cancelled or Failed", description: "Image downloaded instead.", variant: "default" });
+              }
             }
-          } else if (blob) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'typecast_result.png';
-            link.click();
-            URL.revokeObjectURL(link.href);
+          } else if (blob) { // Fallback for browsers that don't support navigator.share with files
+            handleDownload();
           } else {
              toast({ title: "Error", description: "Could not generate image for sharing.", variant: "destructive" });
           }
@@ -104,11 +119,16 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
   const handleDownload = async () => {
     if (cardRef.current) {
        try {
-        const canvas = await html2canvas(cardRef.current, { scale: 2, backgroundColor: null });
+        const canvas = await html2canvas(cardRef.current, { 
+            scale: 2, 
+            backgroundColor: null,
+            logging: false,
+            useCORS: true
+        });
         const image = canvas.toDataURL("image/png");
         const link = document.createElement('a');
         link.href = image;
-        link.download = 'typecast_result.png';
+        link.download = `${APP_NAME.toLowerCase()}_result_${mbtiType}.png`;
         link.click();
       } catch (error) {
         console.error("Error generating download image:", error);
@@ -142,13 +162,11 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
         domainUriPrefix: dynamicLinksDomain.startsWith("http") ? dynamicLinksDomain : `https://${dynamicLinksDomain}`,
         link: deepLink,
         androidInfo: {
-          // Replace with your Android app's package name if you have one
           // androidPackageName: "com.example.typecast" 
         },
         iosInfo: {
-          // Replace with your iOS app's bundle ID if you have one
           // iosBundleId: "com.example.typecast"
-          // iosAppStoreId: "YOUR_APP_STORE_ID" // If you have an App Store ID
+          // iosAppStoreId: "YOUR_APP_STORE_ID"
         },
         socialMetaTagInfo: {
           socialTitle: socialTitle,
@@ -185,7 +203,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
           text: `${socialDescription} Check it out:`,
           url: shortLink,
         });
-        toast({ title: "Link Shared!", description: "Dynamic link copied and ready to share." });
+        toast({ title: "Link Shared!", description: "Dynamic link ready to share." });
       } else {
         navigator.clipboard.writeText(shortLink);
         toast({ title: "Link Copied!", description: "Dynamic link copied to clipboard." });

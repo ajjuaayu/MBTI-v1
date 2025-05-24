@@ -15,7 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { MessageSquareHeart, Home, Repeat } from "lucide-react"; // Removed User, Share icons
 import type { MbtiScores } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
+import CanvasPlaceholder from "@/components/ui/CanvasPlaceholder";
+
 
 export default function ResultsPage() {
   const params = useParams();
@@ -35,11 +36,10 @@ export default function ResultsPage() {
     if (mbtiType && MBTI_TYPES.includes(mbtiType)) {
       setIsValidType(true);
       
-      // Check for name from URL (from dynamic link) first, then localStorage
       const nameFromUrl = searchParams.get('name');
       if (nameFromUrl) {
-        setUserName(nameFromUrl);
-        localStorage.setItem('userName', nameFromUrl); // Optionally save it if shared via link
+        setUserName(decodeURIComponent(nameFromUrl)); // Decode name from URL
+        localStorage.setItem('userName', decodeURIComponent(nameFromUrl)); 
       } else {
         const storedName = localStorage.getItem('userName');
         if (storedName) {
@@ -53,9 +53,6 @@ export default function ResultsPage() {
           setScores(JSON.parse(storedScores));
         } catch (e) {
           console.error("Failed to parse scores from localStorage", e);
-          // If scores are crucial and not present (e.g. direct link access without quiz),
-          // you might want to redirect or show a message.
-          // For now, we allow viewing results without scores (bar chart will be hidden).
         }
       }
     } else if (mbtiType) { 
@@ -82,8 +79,6 @@ export default function ResultsPage() {
   }
 
   if (!isValidType) {
-    // This case should ideally be handled by the router.replace in useEffect,
-    // but as a fallback:
     return (
       <Card className="max-w-lg mx-auto my-10 text-center">
         <CardHeader>
@@ -101,7 +96,6 @@ export default function ResultsPage() {
 
   const typeDetails = MBTI_DESCRIPTIONS[mbtiType];
   if (!typeDetails) {
-     // Should not happen if isValidType is true, but good for TS and robustness
     return <p>Error: Type details not found.</p>;
   }
   const greetingName = userName ? `${userName}, ` : "";
@@ -109,14 +103,16 @@ export default function ResultsPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-10">
       <header className="text-center">
-        <div className="inline-block p-3 bg-accent rounded-full mb-4 shadow-md">
-           <Image 
-            src={`https://placehold.co/80x80.png?text=${mbtiType}`}
-            alt={`${mbtiType} icon`}
-            width={80}
-            height={80}
+        <div className="inline-block p-1 bg-gradient-to-br from-primary via-accent to-secondary rounded-full mb-4 shadow-md overflow-hidden">
+          <CanvasPlaceholder
+            canvasWidth={80}
+            canvasHeight={80}
+            textToDraw={mbtiType}
+            backgroundColorVar="--primary"
+            textColorVar="--primary-foreground"
             className="rounded-full"
-            data-ai-hint={typeDetails.iconHint}
+            dataAiHint={typeDetails.iconHint}
+            aria-label={`${mbtiType} icon`}
           />
         </div>
         <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-transparent bg-clip-text">

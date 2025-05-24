@@ -1,10 +1,10 @@
 
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Brain, Users, Sparkles } from "lucide-react";
 import { APP_NAME, APP_DESCRIPTION } from "@/config/site";
+import CanvasPlaceholder from "@/components/ui/CanvasPlaceholder";
 
 export default function HomePage() {
   return (
@@ -42,24 +42,21 @@ export default function HomePage() {
           icon={<Brain className="h-8 w-8 text-primary" />}
           title="Discover Yourself"
           description="Take our insightful quizzes to find your MBTI type and learn what makes you unique."
-          imageSrc="https://placehold.co/600x400.png"
-          imageAlt="Abstract representation of a brain"
+          canvasText="brain network"
           aiHint="brain network"
         />
         <FeatureCard
           icon={<Users className="h-8 w-8 text-primary" />}
           title="Connect & Compare"
           description="See how you stack up against friends and the community. Explore compatibility with other types."
-          imageSrc="https://placehold.co/600x400.png"
-          imageAlt="Illustration of diverse people connecting"
+          canvasText="people connection"
           aiHint="people connection"
         />
         <FeatureCard
           icon={<Sparkles className="h-8 w-8 text-primary" />}
           title="AI-Powered Insights"
           description="Get unique AI-generated persona descriptions and chat with an AI version of any MBTI type."
-          imageSrc="https://placehold.co/600x400.png"
-          imageAlt="Abstract AI or futuristic interface"
+          canvasText="ai future"
           aiHint="ai future"
         />
       </section>
@@ -83,26 +80,28 @@ interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
-  imageSrc: string;
-  imageAlt: string;
+  canvasText: string; // Renamed from imageAlt for clarity with canvas
   aiHint: string;
 }
 
-function FeatureCard({ icon, title, description, imageSrc, imageAlt, aiHint }: FeatureCardProps) {
+function FeatureCard({ icon, title, description, canvasText, aiHint }: FeatureCardProps) {
   return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader className="flex flex-row items-start gap-4 bg-accent/50 p-4">
         <div className="p-2 bg-background rounded-md">{icon}</div>
         <CardTitle className="text-2xl mt-1">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="relative w-full h-40 mb-4 rounded-md overflow-hidden">
-          <Image 
-            src={imageSrc} 
-            alt={imageAlt} 
-            layout="fill" 
-            objectFit="cover" 
-            data-ai-hint={aiHint}
+      <CardContent className="p-4 flex-grow flex flex-col">
+        <div className="relative w-full h-40 mb-4 rounded-md overflow-hidden border border-border">
+          <CanvasPlaceholder
+            canvasWidth={300} // Intrinsic width of the canvas drawing
+            canvasHeight={160} // Intrinsic height of the canvas drawing
+            textToDraw={canvasText}
+            backgroundColorVar="--accent"
+            textColorVar="--accent-foreground"
+            className="w-full h-full object-cover" // CSS to make it fill the container
+            dataAiHint={aiHint}
+            aria-label={description} // For accessibility
           />
         </div>
         <CardDescription className="text-base">{description}</CardDescription>
