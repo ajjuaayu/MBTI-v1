@@ -32,12 +32,12 @@ export default function QuizClient({ quiz }: QuizClientProps) {
   const currentQuestion = quiz.questions[currentQuestionIndex];
 
   useEffect(() => {
-    // Reset scores if quiz changes or on initial load
+    // Reset states if quiz changes or on initial load
     setScores(getDefaultScores());
     setAnswers({});
     setCurrentQuestionIndex(0);
     setQuizStarted(false);
-    setUserName("");
+    setUserName(""); // Also reset userName if quiz changes
     setError(null);
     setNameError(null);
   }, [quiz]);
@@ -62,11 +62,9 @@ export default function QuizClient({ quiz }: QuizClientProps) {
       setError("Please select an answer before proceeding.");
       return;
     }
-    // If we reach here, an answer was selected for the current question.
-    // handleAnswer would have already called setError(null).
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
-      setError(null); // Explicitly clear error state for the new question
+      setError(null); 
     }
   };
 
@@ -85,8 +83,8 @@ export default function QuizClient({ quiz }: QuizClientProps) {
     });
     
     const mbtiType = calculateMbtiType(finalScores);
-    localStorage.setItem('quizScores', JSON.stringify(finalScores)); // Store scores for results page
-    localStorage.setItem('userName', userName); // Store user name
+    localStorage.setItem('quizScores', JSON.stringify(finalScores)); 
+    localStorage.setItem('userName', userName); 
     router.push(`/quiz/results/${mbtiType}`);
   };
 
@@ -149,17 +147,18 @@ export default function QuizClient({ quiz }: QuizClientProps) {
         <div className="p-4 border rounded-lg bg-background shadow-sm">
           <p className="text-xl font-semibold mb-6 text-center">{currentQuestion.text}</p>
           <RadioGroup
+            key={currentQuestion.id} // Force re-render on question change
             value={answers[currentQuestion.id]}
             onValueChange={(value) => handleAnswer(currentQuestion.id, value as MbtiDichotomy)}
             className="space-y-4"
           >
             {currentQuestion.options.map((option, index) => (
               <Label
-                key={index}
-                htmlFor={`option-${index}`}
+                key={`${currentQuestion.id}-option-${index}`} // Ensure option keys are also unique per question
+                htmlFor={`option-${currentQuestion.id}-${index}`}
                 className={`flex items-center p-4 border rounded-md cursor-pointer transition-all duration-200 ease-in-out hover:border-primary ${answers[currentQuestion.id] === option.value ? 'border-primary bg-accent shadow-md' : 'border-border'}`}
               >
-                <RadioGroupItem value={option.value} id={`option-${index}`} className="mr-3 h-5 w-5" />
+                <RadioGroupItem value={option.value} id={`option-${currentQuestion.id}-${index}`} className="mr-3 h-5 w-5" />
                 <span className="text-base">{option.text}</span>
               </Label>
             ))}
