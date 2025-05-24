@@ -38,6 +38,8 @@ export default function QuizClient({ quiz }: QuizClientProps) {
     setCurrentQuestionIndex(0);
     setQuizStarted(false);
     setUserName("");
+    setError(null);
+    setNameError(null);
   }, [quiz]);
 
   const handleNameSubmit = (e: React.FormEvent) => {
@@ -60,8 +62,11 @@ export default function QuizClient({ quiz }: QuizClientProps) {
       setError("Please select an answer before proceeding.");
       return;
     }
+    // If we reach here, an answer was selected for the current question.
+    // handleAnswer would have already called setError(null).
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+      setError(null); // Explicitly clear error state for the new question
     }
   };
 
