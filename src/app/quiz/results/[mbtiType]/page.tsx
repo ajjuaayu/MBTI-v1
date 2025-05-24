@@ -60,11 +60,10 @@ export default function ResultsPage() {
   }, [mbtiType, router, searchParams]);
 
   useEffect(() => {
-    // Initialize personaForShareCard with static description only if it's not already set (e.g., by AI persona)
+    // Initialize personaForShareCard with the full static description.
+    // This will be overridden if an AI persona is fetched later by handleAIPersonaFetched.
     if (isValidType && typeof personaForShareCard === 'undefined' && MBTI_DESCRIPTIONS[mbtiType]) {
-      const staticDesc = MBTI_DESCRIPTIONS[mbtiType]?.description;
-      // Take the first sentence or a reasonable part for the share card.
-      setPersonaForShareCard(staticDesc.split('.')[0] + '.' || staticDesc);
+      setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description);
     }
   }, [isValidType, mbtiType, personaForShareCard]);
 

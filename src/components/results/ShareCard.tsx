@@ -13,17 +13,17 @@ import { useToast } from "@/hooks/use-toast";
 interface ShareCardProps {
   mbtiType: MBTIType;
   userName?: string;
-  personaDescription?: string;
+  personaDescription?: string; // This will be the full AI description if fetched, or full static description
 }
 
 // eslint-disable-next-line react/display-name
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userName, personaDescription }, ref) => {
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { title: "Personality Type", description: "Unique and special.", iconHint: "star sparkle" };
   
-  // Use AI persona if available for the title, otherwise the static type title
-  const dynamicTitle = personaDescription ? (personaDescription.split(/[.!?]/)[0] || typeInfo.title) : typeInfo.title;
-  // Use full persona description if available, otherwise static description
-  const dynamicDescription = personaDescription || typeInfo.description;
+  // The `personaDescription` prop now directly holds the desired full description 
+  // (AI-generated if available, otherwise the full static description).
+  // The static title from typeInfo will always be used in the header.
+  const displayDescription = personaDescription || typeInfo.description;
 
   const cardName = userName || "You";
   const [appDomain, setAppDomain] = useState("our website");
@@ -65,11 +65,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
           </div>
           <p className="text-sm font-medium text-primary tracking-wider uppercase">{cardName}'s {APP_NAME} Result</p>
           <CardTitle className="text-4xl font-bold text-foreground mt-1">{mbtiType}</CardTitle>
-          <p className="text-xl text-muted-foreground">{dynamicTitle}</p>
+          <p className="text-xl text-muted-foreground">{typeInfo.title}</p> {/* Always use the static title here */}
         </CardHeader>
         <CardContent className="p-6 text-center bg-background">
           <p className="text-lg text-foreground mb-4 leading-relaxed">
-            {dynamicDescription}
+            {displayDescription} {/* Use the prepared full description */}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
             Discover your type at {appDomain}!
