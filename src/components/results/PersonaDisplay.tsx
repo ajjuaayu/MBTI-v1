@@ -8,7 +8,7 @@ import { generateAIPersona, type AIPersonaGeneratorOutput } from "@/ai/flows/ai-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Wand2, Sparkles, AlertCircle } from "lucide-react";
+import { Wand2, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 
 interface PersonaDisplayProps {
   mbtiType: MBTIType;
@@ -82,7 +82,7 @@ export default function PersonaDisplay({ mbtiType }: PersonaDisplayProps) {
           <Button onClick={fetchAIPersona} disabled={isLoadingAI} variant="outline">
             {isLoadingAI ? (
               <>
-                <Sparkles className="mr-2 h-4 w-4 animate-pulse" /> Generating...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
               </>
             ) : showAIPersona && aiPersona ? (
               <>

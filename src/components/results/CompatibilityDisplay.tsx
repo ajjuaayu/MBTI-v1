@@ -7,7 +7,7 @@ import { aiCompatibility, type AICompatibilityOutput } from "@/ai/flows/ai-compa
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Users, Swords, Handshake, Brain, AlertCircle } from "lucide-react";
+import { Users, Swords, Handshake, Brain, AlertCircle, Loader2 } from "lucide-react";
 
 interface CompatibilityDisplayProps {
   mbtiType: MBTIType;
@@ -94,7 +94,7 @@ export default function CompatibilityDisplay({ mbtiType }: CompatibilityDisplayP
           <Button onClick={fetchAICompatibility} disabled={isLoadingAI} variant="outline">
             {isLoadingAI ? (
               <>
-                <Brain className="mr-2 h-4 w-4 animate-pulse" /> Analyzing...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
               </>
             ) : showAICompatibility && aiCompatibilityData ? (
               <>
