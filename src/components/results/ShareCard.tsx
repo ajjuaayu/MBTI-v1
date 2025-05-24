@@ -19,7 +19,12 @@ interface ShareCardProps {
 // eslint-disable-next-line react/display-name
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userName, personaDescription }, ref) => {
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { title: "Personality Type", description: "Unique and special.", iconHint: "star sparkle" };
-  const displayTitle = personaDescription ? personaDescription.split(/[,.]/)[0] : typeInfo.title;
+  
+  // Use AI persona if available for the title, otherwise the static type title
+  const dynamicTitle = personaDescription ? (personaDescription.split(/[.!?]/)[0] || typeInfo.title) : typeInfo.title;
+  // Use full persona description if available, otherwise static description
+  const dynamicDescription = personaDescription || typeInfo.description;
+
   const cardName = userName || "You";
   const [appDomain, setAppDomain] = useState("our website");
 
@@ -35,8 +40,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
           <div 
             className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg"
-            data-ai-hint={typeInfo.iconHint}
-            aria-label={`${mbtiType} icon`}
           >
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
               <circle cx="50" cy="50" r="50" fill="hsl(var(--primary))" />
@@ -56,11 +59,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
           </div>
           <p className="text-sm font-medium text-primary tracking-wider uppercase">{cardName}'s {APP_NAME} Result</p>
           <CardTitle className="text-4xl font-bold text-foreground mt-1">{mbtiType}</CardTitle>
-          <p className="text-xl text-muted-foreground">{displayTitle}</p>
+          <p className="text-xl text-muted-foreground">{dynamicTitle}</p>
         </CardHeader>
         <CardContent className="p-6 text-center bg-background">
-          <p className="text-lg text-foreground mb-4">
-            {personaDescription ? personaDescription : typeInfo.description}
+          <p className="text-lg text-foreground mb-4 leading-relaxed">
+            {dynamicDescription}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
             Discover your type at {appDomain}!
@@ -87,10 +90,11 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
   const handleShareImage = async () => {
     if (cardRef.current) {
+      toast({ title: "Generating Image...", description: "Please wait a moment." });
       try {
         const canvas = await html2canvas(cardRef.current, { 
             scale: 2, 
-            backgroundColor: null, // Attempt to make background transparent for the gradient div
+            backgroundColor: null, 
             logging: false, 
             useCORS: true 
         });
@@ -103,11 +107,14 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
                 text: `I got ${mbtiType} on ${APP_NAME}! Check it out.`,
                 files: [file],
               });
+              toast({ title: "Image Shared!", variant: "default" });
             } catch (error) {
               console.error("Error sharing image:", error);
               if ((error as Error).name !== 'AbortError') {
                 handleDownload(); 
                 toast({ title: "Sharing Cancelled or Failed", description: "Image downloaded instead.", variant: "default" });
+              } else {
+                toast({ title: "Sharing Cancelled", variant: "default" });
               }
             }
           } else if (blob) { 
@@ -125,6 +132,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
   const handleDownload = async () => {
     if (cardRef.current) {
+       toast({ title: "Preparing Download...", description: "Please wait a moment." });
        try {
         const canvas = await html2canvas(cardRef.current, { 
             scale: 2, 
@@ -137,6 +145,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
         link.href = image;
         link.download = `${APP_NAME.toLowerCase()}_result_${mbtiType}.png`;
         link.click();
+        toast({ title: "Image Downloaded!", variant: "default"});
       } catch (error) {
         console.error("Error generating download image:", error);
         toast({ title: "Download Failed", description: "Could not generate image for download.", variant: "destructive" });
@@ -146,7 +155,10 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
   const handleShareDynamicLink = async () => {
     setIsGeneratingLink(true);
-    toast({ title: "Generating Share Link...", description: "Please wait a moment." });
+    const { id: toastId } = toast({ 
+      title: "Generating Share Link...", 
+      description: "Please wait a moment.",
+    });
 
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     const dynamicLinksDomain = process.env.NEXT_PUBLIC_FIREBASE_DYNAMIC_LINKS_DOMAIN;
@@ -155,7 +167,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
     if (!apiKey || !dynamicLinksDomain || !appDomain) {
       console.error("Firebase Dynamic Links or App Domain configuration is missing.");
-      toast({ title: "Configuration Error", description: "Sharing feature is not properly configured. Please contact support.", variant: "destructive" });
+      toast({ id: toastId, title: "Configuration Error", description: "Sharing feature is not properly configured. Please contact support.", variant: "destructive", duration: 5000 });
       setIsGeneratingLink(false);
       return;
     }
@@ -168,8 +180,8 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
       dynamicLinkInfo: {
         domainUriPrefix: dynamicLinksDomain.startsWith("http") ? dynamicLinksDomain : `https://${dynamicLinksDomain}`,
         link: deepLink,
-        androidInfo: {},
-        iosInfo: {},
+        androidInfo: {}, // Add androidPackageName if you have an Android app
+        iosInfo: {}, // Add iosBundleId if you have an iOS app
         socialMetaTagInfo: {
           socialTitle: socialTitle,
           socialDescription: socialDescription,
@@ -205,14 +217,14 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
           text: `${socialDescription} Check it out:`,
           url: shortLink,
         });
-        toast({ title: "Link Shared!", description: "Dynamic link ready to share." });
+        toast({ id: toastId, title: "Link Shared!", description: "Dynamic link ready to share.", variant: "default" });
       } else {
         navigator.clipboard.writeText(shortLink);
-        toast({ title: "Link Copied!", description: "Dynamic link copied to clipboard." });
+        toast({ id: toastId, title: "Link Copied!", description: "Dynamic link copied to clipboard.", variant: "default" });
       }
     } catch (error: any) {
       console.error("Error sharing dynamic link:", error);
-      toast({ title: "Sharing Failed", description: error.message || "Could not create or share the link.", variant: "destructive" });
+      toast({ id: toastId, title: "Sharing Failed", description: error.message || "Could not create or share the link.", variant: "destructive", duration: 5000 });
     } finally {
       setIsGeneratingLink(false);
     }

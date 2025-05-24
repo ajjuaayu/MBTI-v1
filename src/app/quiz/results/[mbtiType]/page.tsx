@@ -2,7 +2,7 @@
 "use client"; // Required for useEffect, useState, localStorage, and useRef
 
 import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
+import { useParams, useRouter, useSearchParams } from "next/navigation"; 
 import Link from "next/link";
 import type { MBTIType } from "@/config/site";
 import { MBTI_TYPES, MBTI_DESCRIPTIONS, APP_NAME } from "@/config/site";
@@ -60,10 +60,17 @@ export default function ResultsPage() {
   }, [mbtiType, router, searchParams]);
 
   useEffect(() => {
+    // Initialize personaForShareCard with static description only if it's not already set (e.g., by AI persona)
     if (isValidType && typeof personaForShareCard === 'undefined' && MBTI_DESCRIPTIONS[mbtiType]) {
-      setPersonaForShareCard(MBTI_DESCRIPTIONS[mbtiType]?.description.split('.')[0] + '.');
+      const staticDesc = MBTI_DESCRIPTIONS[mbtiType]?.description;
+      // Take the first sentence or a reasonable part for the share card.
+      setPersonaForShareCard(staticDesc.split('.')[0] + '.' || staticDesc);
     }
   }, [isValidType, mbtiType, personaForShareCard]);
+
+  const handleAIPersonaFetched = (description: string) => {
+    setPersonaForShareCard(description);
+  };
 
 
   if (isLoading) {
@@ -94,7 +101,6 @@ export default function ResultsPage() {
 
   const typeDetails = MBTI_DESCRIPTIONS[mbtiType];
   if (!typeDetails) {
-    // This should ideally not happen with valid MBTI types
     return (
          <Card className="max-w-lg mx-auto my-10 text-center">
             <CardHeader>
@@ -116,8 +122,6 @@ export default function ResultsPage() {
       <header className="text-center">
         <div 
           className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg border-4 border-primary"
-          data-ai-hint={typeDetails.iconHint}
-          aria-label={`${mbtiType} icon`}
         >
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
             <circle cx="50" cy="50" r="50" fill="hsl(var(--primary))" />
@@ -150,7 +154,7 @@ export default function ResultsPage() {
 
       {scores && <MBTIBarChart scores={scores} />}
       
-      <PersonaDisplay mbtiType={mbtiType} />
+      <PersonaDisplay mbtiType={mbtiType} onAIPersonaFetched={handleAIPersonaFetched} />
       <CompatibilityDisplay mbtiType={mbtiType} />
 
       <Card className="text-center shadow-lg">

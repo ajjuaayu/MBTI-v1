@@ -7,7 +7,7 @@ import { simulateChat } from "@/ai/flows/simulated-chat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // Removed AvatarImage
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Bot, User, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ChatMessage } from "@/lib/types";

@@ -12,9 +12,10 @@ import { Wand2, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 
 interface PersonaDisplayProps {
   mbtiType: MBTIType;
+  onAIPersonaFetched?: (description: string) => void;
 }
 
-export default function PersonaDisplay({ mbtiType }: PersonaDisplayProps) {
+export default function PersonaDisplay({ mbtiType, onAIPersonaFetched }: PersonaDisplayProps) {
   const staticPersona = MBTI_DESCRIPTIONS[mbtiType];
   const [aiPersona, setAiPersona] = useState<AIPersonaGeneratorOutput | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
@@ -25,15 +26,20 @@ export default function PersonaDisplay({ mbtiType }: PersonaDisplayProps) {
     if (!mbtiType) return;
     setIsLoadingAI(true);
     setAiError(null);
-    setAiPersona(null); // Clear previous AI persona if any
+    // Do not clear aiPersona here if we want to allow regeneration to update,
+    // but for current flow, it's okay if it's cleared or not before new fetch
+    // setAiPersona(null); 
     try {
       const result = await generateAIPersona({ mbtiType });
       setAiPersona(result);
       setShowAIPersona(true);
+      if (onAIPersonaFetched && result.personaDescription) {
+        onAIPersonaFetched(result.personaDescription);
+      }
     } catch (err) {
       console.error("Failed to generate AI persona:", err);
       setAiError("Could not load your AI Persona. Please try again later.");
-      setShowAIPersona(false);
+      setShowAIPersona(false); // Or keep true and show error alongside old persona if available
     } finally {
       setIsLoadingAI(false);
     }
@@ -74,7 +80,7 @@ export default function PersonaDisplay({ mbtiType }: PersonaDisplayProps) {
           </div>
         )}
 
-        {aiError && (
+        {aiError && !isLoadingAI && ( // Ensure error only shows if not loading
           <p className="text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-2" />{aiError}</p>
         )}
 
