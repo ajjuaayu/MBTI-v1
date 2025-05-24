@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Header } from "@/components/layout/Header";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { APP_NAME, APP_DESCRIPTION } from "@/config/site";
+import { ThemeProvider } from "next-themes";
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -34,16 +35,23 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-geist-sans antialiased`}>
-        <SidebarProvider defaultOpen>
-          <AppSidebar />
-          <SidebarInset>
-            <Header />
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">
-              {children}
-            </main>
-            <Toaster />
-          </SidebarInset>
-        </SidebarProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider defaultOpen>
+            <AppSidebar />
+            <SidebarInset>
+              <Header />
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                {children}
+              </main>
+              <Toaster />
+            </SidebarInset>
+          </SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -15,22 +15,15 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { APP_NAME, navItems, NavItem } from "@/config/site";
-import { Moon, Sun, Settings } from "lucide-react";
-import { useTheme } from "next-themes"; // Assuming next-themes is or will be installed for theme toggling
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  // const { theme, setTheme } = useTheme(); // Enable if next-themes is used
+  const { theme, setTheme } = useTheme();
 
-  // Placeholder for theme toggle - ideally use next-themes
   const toggleTheme = () => {
-    // const newTheme = theme === "light" ? "dark" : "light";
-    // setTheme(newTheme);
-    if (document.documentElement.classList.contains('dark')) {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
+    setTheme(theme === "light" ? "dark" : "light");
   };
   
 
@@ -71,14 +64,12 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center">
-          <Sun className="h-5 w-5 block dark:hidden" />
-          <Moon className="h-5 w-5 hidden dark:block" />
-          <span className="group-data-[collapsible=icon]:hidden">Toggle Theme</span>
+          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="group-data-[collapsible=icon]:hidden">
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </span>
         </Button>
-        {/* <Button variant="ghost" className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center">
-          <Settings className="h-5 w-5" />
-          <span className="group-data-[collapsible=icon]:hidden">Settings</span>
-        </Button> */}
       </SidebarFooter>
     </Sidebar>
   );
