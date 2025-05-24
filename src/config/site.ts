@@ -50,7 +50,7 @@ interface MbtiTypeDetails {
   iconHint: string;
   topTraits: string[];
   famousExamples: { name: string; field: string }[];
-  shareCardGradient: string; // Added for unique ShareCard gradients
+  shareCardGradient: string;
 }
 
 export const MBTI_DESCRIPTIONS: Record<MBTIType, MbtiTypeDetails> = {
@@ -88,7 +88,7 @@ export const MBTI_DESCRIPTIONS: Record<MBTIType, MbtiTypeDetails> = {
       { name: "Nelson Mandela", field: "Former President of South Africa" },
       { name: "Taylor Swift", field: "Musician" },
     ],
-    shareCardGradient: "bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600",
+    shareCardGradient: "bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700",
   },
   INTJ: {
     title: "The Architect",
@@ -97,7 +97,7 @@ export const MBTI_DESCRIPTIONS: Record<MBTIType, MbtiTypeDetails> = {
     topTraits: ["Strategic", "Independent", "Analytical", "Innovative", "Determined"],
     famousExamples: [
       { name: "Elon Musk", field: "Entrepreneur" },
-      { name: "Michelle Obama", field: "Former First Lady" },
+      { name: "Michelle Obama", field: "Former First Lady" }, // Note: Also listed as ESTJ by some
       { name: "Arnold Schwarzenegger", field: "Actor & Politician" },
     ],
     shareCardGradient: "bg-gradient-to-br from-indigo-700 via-blue-800 to-sky-900",
@@ -204,7 +204,7 @@ export const MBTI_DESCRIPTIONS: Record<MBTIType, MbtiTypeDetails> = {
     iconHint: "briefcase office",
     topTraits: ["Organized", "Efficient", "Decisive", "Direct", "Logical"],
     famousExamples: [
-      { name: "Michelle Obama", field: "Former First Lady" },
+      { name: "Michelle Obama", field: "Former First Lady" }, // Also listed as INTJ
       { name: "Judge Judy", field: "TV Personality" },
       { name: "Emma Watson", field: "Actress" },
     ],
@@ -244,6 +244,6 @@ export const MBTI_DESCRIPTIONS: Record<MBTIType, MbtiTypeDetails> = {
       { name: "Margaret Thatcher", field: "Former UK Prime Minister" },
       { name: "George Clooney", field: "Actor & Director" },
     ],
-    shareCardGradient: "bg-gradient-to-br from-red-600 via-slate-700 to-neutral-800",
+    shareCardGradient: "bg-gradient-to-br from-red-600 via-slate-700 to-zinc-800",
   },
 };

@@ -21,16 +21,16 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
   const typeInfo = MBTI_DESCRIPTIONS[mbtiType] || { 
     title: "Personality Type", 
     description: "Unique and special.", 
-    iconHint: "star sparkle",
+    iconHint: "star sparkle", // Default icon hint
     shareCardGradient: "bg-gradient-to-br from-primary via-accent to-secondary" // Default gradient
   };
   
   const displayDescription = personaDescription || typeInfo.description;
   const cardName = userName || "You";
-  const cardGradient = typeInfo.shareCardGradient;
+  const cardGradient = typeInfo.shareCardGradient || "bg-gradient-to-br from-gray-400 to-gray-600"; // Fallback gradient
 
   return (
-    <div ref={ref} className={`${cardGradient} p-1 rounded-xl shadow-2xl`}>
+    <div ref={ref} className={`p-1 rounded-xl shadow-2xl ${cardGradient}`}>
       <Card className="w-full max-w-md mx-auto !border-0">
         <CardHeader className="text-center p-6 bg-background rounded-t-lg">
           <div 
@@ -159,12 +159,12 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
     const { id: toastId } = toast({ 
       title: "Generating Share Link...", 
       description: "Please wait.",
+      duration: 900000 // Keep open until manually dismissed or updated
     });
 
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     const dynamicLinksDomain = process.env.NEXT_PUBLIC_FIREBASE_DYNAMIC_LINKS_DOMAIN;
-    // NEXT_PUBLIC_APP_DOMAIN is not needed for the deep link itself if we construct it directly
-    const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourdefaultdomain.com'; // Fallback for server environment
+    const appBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://yourdefaultdomain.com'; 
 
     const socialImage = process.env.NEXT_PUBLIC_SOCIAL_SHARE_IMAGE_URL;
 
@@ -191,7 +191,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
         socialMetaTagInfo: {
           socialTitle: socialTitle,
           socialDescription: socialDescription,
-          socialImageLink: socialImage,
+          ...(socialImage && { socialImageLink: socialImage }), // Conditionally add image link
         }
       },
       suffix: {
@@ -223,10 +223,10 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
           text: `${socialDescription} Check it out:`,
           url: shortLink,
         });
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready." });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready.", duration: 5000 });
       } else {
         navigator.clipboard.writeText(shortLink);
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied to clipboard." });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied to clipboard.", duration: 5000 });
       }
     } catch (error: any) {
       console.error("Error sharing dynamic link:", error);
