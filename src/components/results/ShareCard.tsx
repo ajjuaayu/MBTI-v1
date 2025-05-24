@@ -26,13 +26,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
   const displayDescription = personaDescription || typeInfo.description;
 
   const cardName = userName || "You";
-  const [appDomain, setAppDomain] = useState("our website");
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setAppDomain(process.env.NEXT_PUBLIC_APP_DOMAIN || window.location.hostname);
-    }
-  }, []);
 
   return (
     <div ref={ref} className="bg-gradient-to-br from-primary via-accent to-secondary p-1 rounded-xl shadow-2xl">
@@ -72,7 +65,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
             {displayDescription} {/* Use the prepared full description */}
           </p>
           <div className="mt-2 text-xs text-muted-foreground">
-            Discover your type at {appDomain}!
+            Discover your type at {APP_NAME}!
           </div>
         </CardContent>
         <CardFooter className="p-4 bg-accent/30 rounded-b-lg flex justify-center">
@@ -163,7 +156,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
     setIsGeneratingLink(true);
     const { id: toastId } = toast({ 
       title: "Generating Share Link...", 
-      description: "Please wait a moment.",
+      description: "Please wait.",
     });
 
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -173,7 +166,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
     if (!apiKey || !dynamicLinksDomain || !appDomain) {
       console.error("Firebase Dynamic Links or App Domain configuration is missing.");
-      toast({ id: toastId, type: "foreground", variant: "destructive", title: "Configuration Error", description: "Sharing feature is not properly configured. Please contact support.", duration: 5000 });
+      toast({ id: toastId, type: "foreground", variant: "destructive", title: "Configuration Error", description: "Sharing feature is not properly configured.", duration: 5000 });
       setIsGeneratingLink(false);
       return;
     }
@@ -223,10 +216,10 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
           text: `${socialDescription} Check it out:`,
           url: shortLink,
         });
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready to share." });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready." });
       } else {
         navigator.clipboard.writeText(shortLink);
-        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied to clipboard." });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied." });
       }
     } catch (error: any) {
       console.error("Error sharing dynamic link:", error);
