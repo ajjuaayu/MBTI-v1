@@ -42,7 +42,13 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ mbtiType, userNa
             className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary shadow-lg"
           >
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-              <circle cx="50" cy="50" r="50" fill="hsl(var(--primary))" />
+              <defs>
+                <linearGradient id="shareCardMbtiGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style={{stopColor: "hsl(var(--primary))"}} />
+                  <stop offset="100%" style={{stopColor: "hsl(var(--accent))"}} />
+                </linearGradient>
+              </defs>
+              <circle cx="50" cy="50" r="50" fill="url(#shareCardMbtiGradient)" />
               <text
                 x="50%"
                 y="50%"
@@ -167,7 +173,7 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
 
     if (!apiKey || !dynamicLinksDomain || !appDomain) {
       console.error("Firebase Dynamic Links or App Domain configuration is missing.");
-      toast({ id: toastId, title: "Configuration Error", description: "Sharing feature is not properly configured. Please contact support.", variant: "destructive", duration: 5000 });
+      toast({ id: toastId, type: "foreground", variant: "destructive", title: "Configuration Error", description: "Sharing feature is not properly configured. Please contact support.", duration: 5000 });
       setIsGeneratingLink(false);
       return;
     }
@@ -217,14 +223,14 @@ export const ShareCardActions = ({ cardRef, mbtiType, userName }: { cardRef: Rea
           text: `${socialDescription} Check it out:`,
           url: shortLink,
         });
-        toast({ id: toastId, title: "Link Shared!", description: "Dynamic link ready to share.", variant: "default" });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Shared!", description: "Dynamic link ready to share." });
       } else {
         navigator.clipboard.writeText(shortLink);
-        toast({ id: toastId, title: "Link Copied!", description: "Dynamic link copied to clipboard.", variant: "default" });
+        toast({ id: toastId, type: "foreground", variant: "default", title: "Link Copied!", description: "Dynamic link copied to clipboard." });
       }
     } catch (error: any) {
       console.error("Error sharing dynamic link:", error);
-      toast({ id: toastId, title: "Sharing Failed", description: error.message || "Could not create or share the link.", variant: "destructive", duration: 5000 });
+      toast({ id: toastId, type: "foreground", variant: "destructive", title: "Sharing Failed", description: error.message || "Could not create or share the link.", duration: 5000 });
     } finally {
       setIsGeneratingLink(false);
     }

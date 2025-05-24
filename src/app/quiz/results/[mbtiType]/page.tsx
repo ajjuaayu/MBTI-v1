@@ -124,7 +124,13 @@ export default function ResultsPage() {
           className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg border-4 border-primary"
         >
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-            <circle cx="50" cy="50" r="50" fill="hsl(var(--primary))" />
+            <defs>
+              <linearGradient id="resultsPageMbtiGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style={{stopColor: "hsl(var(--primary))"}} />
+                <stop offset="100%" style={{stopColor: "hsl(var(--accent))"}} />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="50" fill="url(#resultsPageMbtiGradient)" />
             <text
               x="50%"
               y="50%"
